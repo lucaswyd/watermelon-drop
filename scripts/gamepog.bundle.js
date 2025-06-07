@@ -13,9 +13,7 @@ window.onload = function (e) {
     return urlParams.has('noads');
   }
 
-  if (!checkNoAds())
-    loadScript('https://doodlejumporiginal.com/Support/content.js');
-
+  
   window.addEventListener("keydown", function (e) {
     if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
       e.preventDefault();
