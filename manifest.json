@@ -3,8 +3,8 @@
   "short_name": "Watermelon Drop",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#116c0d",
+  "background_color": "#ffbfcb",
+  "theme_color": "#ffbfcb",
   "icons": [
     {
       "src": "/icon.png",
