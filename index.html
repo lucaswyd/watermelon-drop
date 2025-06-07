@@ -16,11 +16,9 @@
 <!-- Service‑worker registration -->
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(reg => console.log('🔌 SW registered', reg.scope))
-        .catch(err => console.error('SW registration failed:', err));
-    });
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(() => console.log('✅ Service Worker registered'))
+      .catch(err => console.error('Service Worker registration failed:', err));
   }
 </script>
   <!-- The above 4 meta tags *must* come first in the head; any other head content must come *after* these tags --> 
@@ -167,8 +165,13 @@
 	Module['INITIAL_MEMORY'] = extra_params.custom_heap_size;
 
 	Module['onRuntimeInitialized'] = function() {
-		Module.runApp("canvas", extra_params);
-	};
+  PokiSDK.init().then(() => {
+    PokiSDK.gameLoadingFinished();
+    Module.runApp("canvas", extra_params);
+  }).catch(() => {
+    Module.runApp("canvas", extra_params);
+  });
+};
 
 	Module["locateFile"] = function(path, scriptDirectory)
 	{
@@ -248,13 +251,7 @@
 				isLoadFinished = true;
 			}
 		});
-		Module['onRuntimeInitialized'] = function() {
-			PokiSDK.init().then(()=>{
-				Module.runApp("canvas", extra_params);
-			}).catch(()=>{
-				Module.runApp("canvas", extra_params);
-			});
-		};
+		
 	</script>
  </body>
 </html>
