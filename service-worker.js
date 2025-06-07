@@ -1,62 +1,57 @@
-/*  Watermelon Drop – offline cache service‑worker
-    Cache‑first for immutable assets, network‑first for everything else   */
+const CACHE_NAME = 'watermelon-cache-v1';
 
-const CACHE_VERSION = 'wm-drop-v1';
+// List of files to cache for offline support
 const CORE_ASSETS = [
-  '/',                 // the automatically generated /index.html route
+  '/', // index.html
   '/index.html',
-  '/dmloader.js',
-  '/scripts/gamepog.bundle.js',
-  '/watermelon_drop.wasm',
   '/icon.png',
-  '/idle.gif'
-  //  add more assets (e.g., extra images, CSS) here if they’re small & rarely change
+  '/idle.gif',
+  '/manifest.json',
+  '/dmloader.js',
+  '/watermelon_drop_wasm.js',
+  '/watermelon_drop.wasm',
+  '/scripts/gamepog.bundle.js',
+  '/poki/poki-sdk.js',
+  '/poki/poki-sdk-core.js',
+
+  // Archive files (game content)
+  '/archive/archive_files.json',
+  '/archive/game.arcd0',
+  '/archive/game.arci0',
+  '/archive/game.dmanifest0',
+  '/archive/game.projectc0',
+  '/archive/game.public.der0',
 ];
 
-// ‑‑ install: pre‑cache “core” files                                              
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_VERSION).then(cache => cache.addAll(CORE_ASSETS))
-  );
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(CORE_ASSETS);
+    })
+  );
 });
 
-// ‑‑ activate: clean out old caches                                              
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys
-        .filter(k => k !== CACHE_VERSION)
-        .map(k => caches.delete(k))))
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
+    )
   );
   self.clients.claim();
 });
 
-// ‑‑ fetch:                                                                         ‑‑
-// •  Try cache first for core/immutable files.                                     
-// •  For everything else:  try network, fall back to cache if offline.             
 self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url      = new URL(request.url);
-  const isCore   = CORE_ASSETS.includes(url.pathname);
-
-  if (request.method !== 'GET') return;   // skip POST/PUT/etc.
-
+  // Always try the network first, fallback to cache if offline
   event.respondWith(
-    (async () => {
-      if (isCore) {
-        const cached = await caches.match(request);
-        return cached ?? fetch(request);
-      }
-
-      // network‑first for dynamic or large files (e.g., archives)
-      try {
-        const fresh = await fetch(request);
-        // Optionally cache fetched responses here, but skip huge archives to save space
-        return fresh;
-      } catch (err) {
-        return caches.match(request) ?? Response.error();
-      }
-    })()
+    fetch(event.request).catch(() =>
+      caches.match(event.request).then(response => response || caches.match('/index.html'))
+    )
   );
 });
