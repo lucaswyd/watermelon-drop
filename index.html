@@ -3,148 +3,138 @@
  <head> 
   <meta charset="utf-8"> 
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, minimal-ui, shrink-to-fit=no, viewport-fit=cover"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, minimal-ui, shrink-to-fit=no"> 
+  <meta name="apple-mobile-web-app-capable" content="yes"> 
+	 <!-- PWA manifest -->
+<link rel="manifest" href="/manifest.json" />
 
-  <meta name="theme-color" content="#ffbfcb" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="apple-touch-icon" href="/icon.png" />
+<!-- iOS support -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="apple-touch-icon" href="/icon.png" />
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(() => console.log('✅ Service Worker registered'))
-        .catch(err => console.error('Service Worker registration failed:', err));
-    }
-  </script>
-
+<!-- Service‑worker registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(() => console.log('✅ Service Worker registered'))
+      .catch(err => console.error('Service Worker registration failed:', err));
+  }
+</script>
+  <!-- The above 4 meta tags *must* come first in the head; any other head content must come *after* these tags --> 
   <title>Watermelon Drop</title> 
-
   <style type="text/css">
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background-color: #ffbfcb;
-    }
-    body {
-      position: fixed; /* Prevent overscroll */
-      padding-top: env(safe-area-inset-top);
-      /* For legacy iOS */
-      padding-top: constant(safe-area-inset-top);
-    }
+	/* Disable user selection to avoid strange bug in Chrome on Windows:
+	* Selecting a text outside the canvas, then clicking+draging would
+	* drag the selected text but block mouse down/up events to the engine.
+	*/
+	body {
+	
+		position: fixed; /* Prevent overscroll */
+	
+		margin:0;
+		padding:0;
+	}
 
-    /* Disable user selection to avoid strange bug in Chrome on Windows:
-    * Selecting a text outside the canvas, then clicking+draging would
-    * drag the selected text but block mouse down/up events to the engine.
-    */
-    body {
-      margin:0;
-      padding:0;
-      position: fixed; /* Prevent overscroll */
-    }
+	.canvas-app-container {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
 
-    .canvas-app-container {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: rgba(250,252,255,1);
-      background: -moz-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
-      background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(250,252,255,1)), color-stop(50%, rgba(250,252,255,1)), color-stop(50%, rgba(245,249,255,1)), color-stop(100%, rgba(245,249,255,1)));
-      background: -webkit-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
-      background: -o-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
-      background: -ms-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
-      background: linear-gradient(135deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
-      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fafcff', endColorstr='#f5f9ff', GradientType=1 );
-    }
+	.canvas-app-container:-webkit-full-screen {
+		/* Auto width and height in Safari/Chrome fullscreen. */
+		width: auto;
+		height: auto;
+	}
 
-    /* Rest of your existing CSS below unchanged */
+	#canvas {
+		outline: none;
+		border: 0;
+		width: 100%;
+		vertical-align: bottom;
+	}
 
-    .canvas-app-container:-webkit-full-screen {
-      /* Auto width and height in Safari/Chrome fullscreen. */
-      width: auto;
-      height: auto;
-    }
+	#canvas-container {
+		position: relative;
+	}
 
-    #canvas {
-      outline: none;
-      border: 0;
-      width: 100%;
-      vertical-align: bottom;
-    }
+	canvas:focus, canvas:active {
+		outline: none;
+		border: 0;
+		ie-dummy: expression(this.hideFocus=true);
+		-moz-outline-style: none;
+	}
 
-    #canvas-container {
-      position: relative;
-    }
+	div {
+		-webkit-tap-highlight-color: rgba(0,0,0,0);
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	}
 
-    canvas:focus, canvas:active {
-      outline: none;
-      border: 0;
-      ie-dummy: expression(this.hideFocus=true);
-      -moz-outline-style: none;
-    }
+		.canvas-app-progress {
+		position: absolute;
+		background-color: #d1dbeb;
+		height: 6px;
+		margin-top: -6px;
+		width: 100%;
+	}
 
-    div {
-      -webkit-tap-highlight-color: rgba(0,0,0,0);
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
+	.canvas-app-progress-bar {
+		font-size: 12px;
+		height: 6px;
+		color: rgb(255, 255, 255);
+		background-color: #1a72eb;
+		text-align: center;
+		line-height: 20px;
+	}
+	.link, .button {
+		font-family: sans-serif;
+		font-size: 14px;
+		font-weight: normal;
+		font-style: normal;
+		font-stretch: normal;
+		line-height: normal;
+		letter-spacing: 0px;
+		padding-top: 12px;
+	}
 
-    .canvas-app-progress {
-      position: absolute;
-      background-color: #d1dbeb;
-      height: 6px;
-      margin-top: -6px;
-      width: 100%;
-    }
+	.buttons-background {
+		background-color: #ffbfcb;
+		width: 100%;
+		height: 42px;
+	}
 
-    .canvas-app-progress-bar {
-      font-size: 12px;
-      height: 6px;
-      color: rgb(255, 255, 255);
-      background-color: #1a72eb;
-      text-align: center;
-      line-height: 20px;
-    }
-    .link, .button {
-      font-family: sans-serif;
-      font-size: 14px;
-      font-weight: normal;
-      font-style: normal;
-      font-stretch: normal;
-      line-height: normal;
-      letter-spacing: 0px;
-      padding-top: 12px;
-    }
+	body {
+		background-color: #ffbfcb;
+	}
 
-    .buttons-background {
-      background-color: #ffffff;
-      width: 100%;
-      height: 42px;
-    }
+	.canvas-app-container {
+		background: rgba(250,252,255,1);
+		background: -moz-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
+		background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(250,252,255,1)), color-stop(50%, rgba(250,252,255,1)), color-stop(50%, rgba(245,249,255,1)), color-stop(100%, rgba(245,249,255,1)));
+		background: -webkit-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
+		background: -o-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
+		background: -ms-linear-gradient(-45deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
+		background: linear-gradient(135deg, rgba(250,252,255,1) 0%, rgba(250,252,255,1) 50%, rgba(245,249,255,1) 50%, rgba(245,249,255,1) 100%);
+		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fafcff', endColorstr='#f5f9ff', GradientType=1 );
+	}
 
-    body {
-      background-color: #ffffff;
-    }
-
-    .canvas-app-canvas {
-      background-repeat:no-repeat;
-      background-position: center center;
-      background-image: url("idle.gif");
-    }
-  </style> 
-
+	.canvas-app-canvas {
+		background-repeat:no-repeat;
+		background-position: center center;
+		background-image: url("idle.gif");
+	}
+	</style> 
   <script src="/poki/poki-sdk.js"></script>
-  <script src="/scripts/gamepog.bundle.js"></script>
- </head> 
+ <script src="/scripts/gamepog.bundle.js"></script></head> 
  <body> 
   <div id="running-from-file-warning" style="display: none; margin: 3em;"> 
    <h1>Running from local file ⚠️</h1> 
@@ -158,103 +148,110 @@
    <div class="buttons-background"> 
    </div> 
   </div> 
-
-  <!-- your existing scripts below -->
+  <!-- --> 
   <script id="engine-loader" type="text/javascript" src="dmloader.js"></script> 
-
+  <!-- --> 
   <script id="engine-setup" type="text/javascript">
-    var extra_params = {
-      archive_location_filter: function( path ) {
-        return ("archive" + path + "");
-      },
-      engine_arguments: ["--verify-graphics-calls=false",],
-      custom_heap_size: 33554432,
-      full_screen_container: "#canvas-container",
-      disable_context_menu: true
-    }
+	var extra_params = {
+		archive_location_filter: function( path ) {
+			return ("archive" + path + "");
+		},
+		engine_arguments: ["--verify-graphics-calls=false",],
+		custom_heap_size: 33554432,
+		full_screen_container: "#canvas-container",
+		disable_context_menu: true
+	}
 
-    Module['INITIAL_MEMORY'] = extra_params.custom_heap_size;
+	Module['INITIAL_MEMORY'] = extra_params.custom_heap_size;
 
-    Module['onRuntimeInitialized'] = function() {
-      PokiSDK.init().then(() => {
-        PokiSDK.gameLoadingFinished();
-        Module.runApp("canvas", extra_params);
-      }).catch(() => {
-        Module.runApp("canvas", extra_params);
-      });
-    };
+	Module['onRuntimeInitialized'] = function() {
+  PokiSDK.init().then(() => {
+    PokiSDK.gameLoadingFinished();
+    Module.runApp("canvas", extra_params);
+  }).catch(() => {
+    Module.runApp("canvas", extra_params);
+  });
+};
 
-    Module["locateFile"] = function(path, scriptDirectory)
-    {
-      if (path == "dmengine.wasm" || path == "dmengine_release.wasm" || path == "dmengine_headless.wasm") {
-        path = "watermelon_drop.wasm";
-      }
-      return scriptDirectory + path;
-    };
+	Module["locateFile"] = function(path, scriptDirectory)
+	{
+		// dmengine*.wasm is hardcoded in the built JS loader for WASM,
+		// we need to replace it here with the correct project name.
+		if (path == "dmengine.wasm" || path == "dmengine_release.wasm" || path == "dmengine_headless.wasm") {
+			path = "watermelon_drop.wasm";
+		}
+		return scriptDirectory + path;
+	};
 
-    var is_iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    var buttonHeight = 0;
-    var prevInnerWidth = -1;
-    var prevInnerHeight = -1;
-    function resize_game_canvas() {
-      if (is_iOS) {
-        window.scrollTo(0, 0);
-      }
+	
 
-      var app_container = document.getElementById('app-container');
-      var game_canvas = document.getElementById('canvas');
-      var innerWidth = window.innerWidth;
-      var innerHeight = window.innerHeight - buttonHeight;
-      if (prevInnerWidth == innerWidth && prevInnerHeight == innerHeight)
-      {
-        return;
-      }
-      prevInnerWidth = innerWidth;
-      prevInnerHeight = innerHeight;
-      var width = 1280;
-      var height = 720;
-      var targetRatio = width / height;
-      var actualRatio = innerWidth / innerHeight;
+	var is_iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+	var buttonHeight = 0;
+	var prevInnerWidth = -1;
+	var prevInnerHeight = -1;
+	function resize_game_canvas() {
+		// Hack for iOS when exit from Fullscreen mode
+		if (is_iOS) {
+			window.scrollTo(0, 0);
+		}
 
-      width = innerWidth;
-      height = innerHeight;
-
-      app_container.style.width = width + "px";
-      app_container.style.height = height + buttonHeight + "px";
-      game_canvas.width = width;
-      game_canvas.height = height;
-    }
-    resize_game_canvas();
-    window.addEventListener('resize', resize_game_canvas, false);
-    window.addEventListener('orientationchange', resize_game_canvas, false);
-    window.addEventListener('focus', resize_game_canvas, false);
-  </script> 
-
+		var app_container = document.getElementById('app-container');
+		var game_canvas = document.getElementById('canvas');
+		var innerWidth = window.innerWidth;
+		var innerHeight = window.innerHeight - buttonHeight;
+		if (prevInnerWidth == innerWidth && prevInnerHeight == innerHeight)
+		{
+			return;
+		}
+		prevInnerWidth = innerWidth;
+		prevInnerHeight = innerHeight;
+		var width = 1280;
+		var height = 720;
+		var targetRatio = width / height;
+		var actualRatio = innerWidth / innerHeight;
+	
+	
+		//Stretch
+		width = innerWidth;
+		height = innerHeight;
+	
+	
+	
+		app_container.style.width = width + "px";
+		app_container.style.height = height + buttonHeight + "px";
+		game_canvas.width = width;
+		game_canvas.height = height;
+	}
+	resize_game_canvas();
+	window.addEventListener('resize', resize_game_canvas, false);
+	window.addEventListener('orientationchange', resize_game_canvas, false);
+	window.addEventListener('focus', resize_game_canvas, false);
+	</script> 
   <script id="engine-start" type="text/javascript">
-    var runningFromFileWarning = document.getElementById("running-from-file-warning");
-    if (window.location.href.startsWith("file://")) {
-      runningFromFileWarning.style.display = "block";
-    }
-    else {
-      EngineLoader.stream_wasm = "false" === "true";
-      EngineLoader.load("canvas", "watermelon_drop");
-      runningFromFileWarning.parentNode.removeChild(runningFromFileWarning);
-    }
-  </script>   
-
+		var runningFromFileWarning = document.getElementById("running-from-file-warning");
+		if (window.location.href.startsWith("file://")) {
+			runningFromFileWarning.style.display = "block";
+		}
+		else {
+			EngineLoader.stream_wasm = "false" === "true";
+			EngineLoader.load("canvas", "watermelon_drop");
+			runningFromFileWarning.parentNode.removeChild(runningFromFileWarning);
+		}
+	</script>   
   <script id="poki-sdk-setup" type="text/javascript">
-    PokiSDK.gameLoadingStart();
-    var data = {};
-    var isLoadFinished = false;
-    Progress.addListener(function(percentage){
-      data.percentageDone = percentage / 100;
-      if (!isLoadFinished)
-        PokiSDK.gameLoadingProgress(data);
-      if (percentage == 100 && !isLoadFinished) {
-        PokiSDK.gameLoadingFinished();
-        isLoadFinished = true;
-      }
-    });
-  </script>
+		PokiSDK.gameLoadingStart();
+		var data = {};
+		var isLoadFinished = false;
+		Progress.addListener(function(percentage){
+			data.percentageDone = percentage / 100;
+			if (!isLoadFinished)
+				PokiSDK.gameLoadingProgress(data);
+			if (percentage == 100 && !isLoadFinished) {
+				PokiSDK.gameLoadingFinished();
+				isLoadFinished = true;
+			}
+		});
+		
+	</script>
  </body>
 </html>
